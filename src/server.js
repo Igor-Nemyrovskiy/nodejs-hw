@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import pino from 'pino-http';
+import swaggerUi from 'swagger-ui-express';
+import fs from 'node:fs';
 
 const app = express();
 app.use(cors());
@@ -24,6 +26,11 @@ app.use(
 );
 
 const PORT = process.env.PORT ?? 3000;
+const swaggerDocument = JSON.parse(
+  fs.readFileSync(new URL('../docs/openapi.json', import.meta.url), 'utf8'),
+);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get('/notes', (req, res) => {
   res.status(200).json({
