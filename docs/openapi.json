@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Notes API",
-    "description": "API for working with notes. Node.js homework project.",
-    "version": "1.0.0",
+    "description": "REST API for managing notes with Express, MongoDB and Mongoose.",
+    "version": "2.0.0",
     "license": {
       "name": "ISC",
       "url": "https://opensource.org/license/ISC"
@@ -18,11 +18,7 @@
   "tags": [
     {
       "name": "Notes",
-      "description": "Operations with notes"
-    },
-    {
-      "name": "Testing",
-      "description": "Testing server errors"
+      "description": "CRUD operations with notes"
     }
   ],
   "paths": {
@@ -33,86 +29,282 @@
         "operationId": "getAllNotes",
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "List of all notes",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageResponse"
-                },
-                "example": {
-                  "message": "Retrieved all notes"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Note"
+                  }
                 }
               }
             }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Notes"],
+        "summary": "Create a new note",
+        "operationId": "createNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
     },
     "/notes/{noteId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/NoteId"
+        }
+      ],
       "get": {
         "tags": ["Notes"],
         "summary": "Get note by ID",
         "operationId": "getNoteById",
-        "parameters": [
-          {
-            "name": "noteId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the note",
-            "schema": {
-              "type": "string"
-            },
-            "example": "123"
-          }
-        ],
         "responses": {
           "200": {
-            "description": "Successful response",
+            "description": "Note found successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageResponse"
-                },
-                "example": {
-                  "message": "Retrieved note with ID: 123"
+                  "$ref": "#/components/schemas/Note"
                 }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NoteNotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Notes"],
+        "summary": "Update note by ID",
+        "operationId": "updateNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteUpdate"
               }
             }
           }
-        }
-      }
-    },
-    "/test-error": {
-      "get": {
-        "tags": ["Testing"],
-        "summary": "Simulate a server error",
-        "operationId": "simulateServerError",
+        },
         "responses": {
-          "500": {
-            "description": "Internal Server Error",
+          "200": {
+            "description": "Note updated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageResponse"
-                },
-                "example": {
-                  "message": "Simulated server error"
+                  "$ref": "#/components/schemas/Note"
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NoteNotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Notes"],
+        "summary": "Delete note by ID",
+        "operationId": "deleteNote",
+        "responses": {
+          "200": {
+            "description": "Deleted note returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NoteNotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
     }
   },
   "components": {
+    "parameters": {
+      "NoteId": {
+        "name": "noteId",
+        "in": "path",
+        "required": true,
+        "description": "MongoDB ObjectId of the note",
+        "schema": {
+          "type": "string"
+        },
+        "example": "6af7494d690dce7d69b25da5"
+      }
+    },
     "schemas": {
-      "MessageResponse": {
+      "Note": {
+        "type": "object",
+        "required": ["_id", "title"],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB document ID"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "default": ""
+          },
+          "tag": {
+            "$ref": "#/components/schemas/NoteTag"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Automatically added to new notes created through Mongoose"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Automatically updated by Mongoose"
+          },
+          "__v": {
+            "type": "integer",
+            "description": "Mongoose version key"
+          }
+        },
+        "example": {
+          "_id": "6af7494d690dce7d69b25da5",
+          "title": "Buy groceries",
+          "content": "Milk, eggs, bread, coffee",
+          "tag": "Shopping"
+        }
+      },
+      "NoteTag": {
+        "type": "string",
+        "enum": [
+          "Work",
+          "Personal",
+          "Meeting",
+          "Shopping",
+          "Ideas",
+          "Travel",
+          "Finance",
+          "Health",
+          "Important",
+          "Todo"
+        ],
+        "default": "Todo"
+      },
+      "NoteCreate": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Required note title"
+          },
+          "content": {
+            "type": "string",
+            "default": ""
+          },
+          "tag": {
+            "$ref": "#/components/schemas/NoteTag"
+          }
+        },
+        "example": {
+          "title": "Learn MongoDB",
+          "content": "Complete Node.js homework 02",
+          "tag": "Todo"
+        }
+      },
+      "NoteUpdate": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "tag": {
+            "$ref": "#/components/schemas/NoteTag"
+          }
+        },
+        "example": {
+          "title": "MongoDB Homework Completed",
+          "tag": "Work"
+        }
+      },
+      "ErrorResponse": {
         "type": "object",
         "required": ["message"],
         "properties": {
           "message": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {
+      "NoteNotFound": {
+        "description": "Note not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "message": "Note not found"
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
           }
         }
       }
