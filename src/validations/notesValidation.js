@@ -46,5 +46,7 @@ export const updateNoteSchema = {
     tag: Joi.string()
       .valid(...TAGS)
       .optional(),
-  }).min(1),
+  })
+    .or('title', 'content', 'tag')
+    .unknown(false),
 };
