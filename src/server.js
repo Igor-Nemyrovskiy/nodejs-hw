@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { errors } from 'celebrate';
 import 'dotenv/config';
 import { logger } from './middleware/logger.js';
 import swaggerUi from 'swagger-ui-express';
@@ -23,6 +24,8 @@ const swaggerDocument = JSON.parse(
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(notesRoutes);
+
+app.use(errors());
 
 app.use(notFoundHandler);
 
